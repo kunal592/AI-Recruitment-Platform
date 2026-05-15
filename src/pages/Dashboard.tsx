@@ -22,7 +22,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { RootState, AppDispatch } from '../redux/store';
-import { fetchRecommendations } from '../redux/slices/jobsSlice';
+import { fetchRecommendations, fetchStats } from '../redux/slices/jobsSlice';
 import { fetchProfile } from '../redux/slices/profileSlice';
 import { Link } from 'react-router-dom';
 
@@ -39,11 +39,12 @@ const data = [
 export const Dashboard = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { user } = useSelector((state: RootState) => state.auth);
-    const { recommendations, loading } = useSelector((state: RootState) => state.jobs);
+    const { recommendations, stats, loading } = useSelector((state: RootState) => state.jobs);
     const { profile } = useSelector((state: RootState) => state.profile);
 
     useEffect(() => {
         dispatch(fetchRecommendations());
+        dispatch(fetchStats());
         dispatch(fetchProfile());
     }, [dispatch]);
 
@@ -78,10 +79,10 @@ export const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Total Applications', value: '48', icon: Briefcase, color: 'bg-blue-500', trend: '+12%' },
-          { label: 'Interviews Scheduled', value: '6', icon: Users, color: 'bg-purple-500', trend: '+2' },
-          { label: 'ATS Score Avg', value: '84', icon: Trophy, color: 'bg-amber-500', trend: '+5%' },
-          { label: 'Profile Views', value: '1,204', icon: Search, color: 'bg-green-500', trend: '+18%' },
+          { label: 'Total Applications', value: stats?.total_applications || '0', icon: Briefcase, color: 'bg-blue-500', trend: stats?.application_trend || '+0%' },
+          { label: 'Interviews Scheduled', value: stats?.interviews_scheduled || '0', icon: Users, color: 'bg-purple-500', trend: '+0' },
+          { label: 'ATS Score Avg', value: stats?.ats_score_avg || '0', icon: Trophy, color: 'bg-amber-500', trend: '+0%' },
+          { label: 'Profile Views', value: stats?.profile_views?.toLocaleString() || '0', icon: Search, color: 'bg-green-500', trend: '+0%' },
         ].map((stat, i) => (
           <Card key={i} className="dark:bg-slate-900 dark:border-slate-800 transition-colors">
             <CardContent className="p-6">

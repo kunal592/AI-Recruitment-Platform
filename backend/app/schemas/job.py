@@ -27,6 +27,9 @@ class JobResponse(BaseModel):
     skills_required: List[str] = []
     apply_url: Optional[str] = None
     posted_at: Optional[datetime] = None
+    match_percentage: Optional[int] = 0
+    matching_skills: List[str] = []
+    missing_skills: List[str] = []
 
 
 class JobSearchRequest(BaseModel):

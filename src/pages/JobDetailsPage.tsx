@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { 
     Building2, 
@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../redux/store';
+import { fetchJobById } from '../redux/slices/jobsSlice';
 import { customizeResume, generateEmail, generateStudyPlan, autoApply } from '../redux/slices/aiSlice';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'motion/react';
@@ -26,11 +27,33 @@ export const JobDetailsPage = () => {
     const { id } = useParams();
     const dispatch = useDispatch<AppDispatch>();
     const { loading: aiLoading, resumeOptimization, generatedEmail: emailResult, autoApplyResult } = useSelector((state: RootState) => state.ai);
+    const { currentJob: job, loading: jobLoading } = useSelector((state: RootState) => state.jobs);
     const [activeAction, setActiveAction] = useState<string | null>(null);
 
-    const jobDescription = `We are looking for a highly skilled Senior Frontend Engineer to join our Core UI team. 
-    You will be responsible for building high-performance, scalable web applications that serve millions of users daily. 
-    Experience with React, TypeScript, and modern frontend architecture required.`;
+    useEffect(() => {
+        if (id) {
+            dispatch(fetchJobById(id));
+        }
+    }, [dispatch, id]);
+
+    if (jobLoading) {
+        return (
+            <div className="flex items-center justify-center h-[70vh]">
+                <Loader2 className="w-10 h-10 text-primary-600 animate-spin" />
+            </div>
+        );
+    }
+
+    if (!job) {
+        return (
+            <div className="text-center py-20">
+                <h2 className="text-2xl font-bold text-slate-900">Job not found</h2>
+                <Link to="/jobs" className="text-primary-600 font-bold mt-4 inline-block">Return to Job Search</Link>
+            </div>
+        );
+    }
+
+    const jobDescription = job.description;
 
     const handleCustomizeResume = async () => {
         setActiveAction('resume');
@@ -47,8 +70,8 @@ export const JobDetailsPage = () => {
         setActiveAction('email');
         const result = await dispatch(generateEmail({
             email_type: 'application',
-            job_title: 'Senior Frontend Engineer',
-            company_name: 'Meta',
+            job_title: job.title,
+            company_name: job.company,
             job_description: jobDescription,
         }));
         if (generateEmail.fulfilled.match(result)) {
@@ -62,7 +85,7 @@ export const JobDetailsPage = () => {
     const handleGenerateStudyPlan = async () => {
         setActiveAction('study');
         const result = await dispatch(generateStudyPlan({
-            target_role: 'Senior Frontend Engineer',
+            target_role: job.title,
             duration_days: 30,
         }));
         if (generateStudyPlan.fulfilled.match(result)) {
@@ -76,7 +99,7 @@ export const JobDetailsPage = () => {
     const handleAutoApply = async () => {
         setActiveAction('apply');
         const result = await dispatch(autoApply({
-            job_url: `https://example.com/jobs/${id}`,
+            job_url: job.apply_url || `https://example.com/jobs/${id}`,
             submit: false, 
         }));
         if (autoApply.fulfilled.match(result)) {
@@ -104,25 +127,25 @@ export const JobDetailsPage = () => {
                             <div className="flex flex-col md:flex-row justify-between gap-6 mb-10">
                                 <div className="flex gap-6 items-end">
                                     <div className="w-24 h-24 rounded-3xl bg-white shadow-xl flex items-center justify-center text-3xl font-black text-primary-600 border-4 border-white">
-                                        ME
+                                        {job.company?.[0] || 'J'}
                                     </div>
                                     <div className="pb-2">
-                                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Senior Frontend Engineer</h1>
+                                        <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight">{job.title}</h1>
                                         <div className="flex flex-wrap gap-4 mt-2">
                                             <div className="flex items-center text-slate-500 dark:text-slate-400 font-medium">
-                                                <Building2 className="w-4 h-4 mr-1.5 text-primary-500" /> Meta
+                                                <Building2 className="w-4 h-4 mr-1.5 text-primary-500" /> {job.company}
                                             </div>
                                             <div className="flex items-center text-slate-500 dark:text-slate-400 font-medium">
-                                                <MapPin className="w-4 h-4 mr-1.5 text-primary-500" /> Menlo Park, CA
+                                                <MapPin className="w-4 h-4 mr-1.5 text-primary-500" /> {job.location}
                                             </div>
                                             <div className="flex items-center text-slate-500 dark:text-slate-400 font-medium">
-                                                <Briefcase className="w-4 h-4 mr-1.5 text-primary-500" /> Remote
+                                                <Briefcase className="w-4 h-4 mr-1.5 text-primary-500" /> {job.type}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex flex-col items-center justify-center p-6 bg-primary-600 rounded-3xl shadow-lg shadow-primary-600/20 min-w-[150px]">
-                                    <div className="text-3xl font-black text-white leading-none">98%</div>
+                                    <div className="text-3xl font-black text-white leading-none">{job.matchScore}%</div>
                                     <div className="text-[10px] font-black text-primary-100 uppercase tracking-[0.2em] mt-2">AI Score</div>
                                 </div>
                             </div>
@@ -144,7 +167,7 @@ export const JobDetailsPage = () => {
                                         Core Responsibilities
                                     </h3>
                                     <ul className="grid md:grid-cols-2 gap-4 list-none p-0">
-                                        {['Develop modular, reusable React components', 'Optimize application performance', 'Maintain design system consistency', 'Mentor junior engineers'].map(item => (
+                                        {(job.skills || []).map((item: string) => (
                                             <li key={item} className="flex items-start p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                                                 <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 shrink-0" />
                                                 <span className="text-slate-700 dark:text-slate-300 font-semibold text-sm leading-tight">{item}</span>
@@ -162,21 +185,21 @@ export const JobDetailsPage = () => {
                             <div className="p-6 bg-green-50/50 dark:bg-green-900/10 rounded-3xl border border-green-100/50 dark:border-green-900/20">
                                 <h4 className="text-xs font-black text-green-700 dark:text-green-400 mb-6 uppercase tracking-widest">Matching Skills</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {['React', 'TypeScript', 'Tailwind CSS', 'Redux', 'System Design'].map(s => (
+                                    {(job.matchingSkills || []).length > 0 ? job.matchingSkills?.map(s => (
                                         <span key={s} className="px-4 py-2 bg-white dark:bg-slate-900 text-green-700 dark:text-green-400 rounded-xl text-sm font-bold shadow-sm border border-green-100 dark:border-green-900/30 flex items-center">
                                             <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> {s}
                                         </span>
-                                    ))}
+                                    )) : <p className="text-slate-400 text-sm font-bold">No matching skills found yet.</p>}
                                 </div>
                             </div>
                             <div className="p-6 bg-red-50/50 dark:bg-red-900/10 rounded-3xl border border-red-100/50 dark:border-red-900/20">
                                 <h4 className="text-xs font-black text-red-700 dark:text-red-400 mb-6 uppercase tracking-widest">Skill Gaps</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {['GraphQL', 'Testing Library'].map(s => (
+                                    {(job.missingSkills || []).length > 0 ? job.missingSkills?.map(s => (
                                         <span key={s} className="px-4 py-2 bg-white dark:bg-slate-900 text-red-700 dark:text-red-400 rounded-xl text-sm font-bold shadow-sm border border-red-100 dark:border-red-900/30 flex items-center">
                                             <XCircle className="w-3.5 h-3.5 mr-2" /> {s}
                                         </span>
-                                    ))}
+                                    )) : <p className="text-slate-400 text-sm font-bold">No major skill gaps identified!</p>}
                                 </div>
                             </div>
                         </CardContent>

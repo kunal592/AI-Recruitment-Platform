@@ -19,12 +19,15 @@ export interface Job {
   source?: string;
   external_id?: string;
   posted_at?: string;
+  matchingSkills?: string[];
+  missingSkills?: string[];
 }
 
 interface JobsState {
   list: Job[];
   recommendations: Job[];
   savedJobs: any[];
+  stats: any | null;
   currentJob: Job | null;
   loading: boolean;
   error: string | null;
@@ -64,6 +67,8 @@ function normalizeJob(raw: any): Job {
     source: raw.source,
     external_id: raw.external_id,
     posted_at: raw.posted_at,
+    matchingSkills: raw.matching_skills || [],
+    missingSkills: raw.missing_skills || [],
   };
 }
 
@@ -77,6 +82,18 @@ export const fetchJobs = createAsyncThunk('jobs/fetchJobs', async (_, { rejectWi
     return rejectWithValue(err.parsedMessage || 'Failed to load jobs');
   }
 });
+
+export const fetchJobById = createAsyncThunk(
+  'jobs/fetchJobById',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      const res = await jobService.getJobById(id);
+      return normalizeJob(res.data);
+    } catch (err: any) {
+      return rejectWithValue(err.parsedMessage || 'Failed to load job details');
+    }
+  }
+);
 
 export const searchJobs = createAsyncThunk(
   'jobs/searchJobs',
@@ -121,12 +138,25 @@ export const fetchSavedJobs = createAsyncThunk(
   }
 );
 
+export const fetchStats = createAsyncThunk(
+  'jobs/fetchStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await jobService.getStats();
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.parsedMessage || 'Failed to load stats');
+    }
+  }
+);
+
 // ── Slice ───────────────────────────────────────────────────────────────────
 
 const initialState: JobsState = {
   list: [],
   recommendations: [],
   savedJobs: [],
+  stats: null,
   currentJob: null,
   loading: false,
   error: null,
@@ -165,6 +195,12 @@ const jobsSlice = createSlice({
       .addCase(searchJobs.fulfilled, (state, action) => { state.list = action.payload; state.loading = false; })
       .addCase(searchJobs.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
 
+    // fetchJobById
+    builder
+      .addCase(fetchJobById.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchJobById.fulfilled, (state, action) => { state.currentJob = action.payload; state.loading = false; })
+      .addCase(fetchJobById.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
+
     // fetchRecommendations
     builder
       .addCase(fetchRecommendations.pending, (state) => { state.loading = true; })
@@ -176,6 +212,12 @@ const jobsSlice = createSlice({
       .addCase(fetchSavedJobs.pending, (state) => { state.loading = true; })
       .addCase(fetchSavedJobs.fulfilled, (state, action) => { state.savedJobs = action.payload; state.loading = false; })
       .addCase(fetchSavedJobs.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
+
+    // fetchStats
+    builder
+      .addCase(fetchStats.pending, (state) => { state.loading = true; })
+      .addCase(fetchStats.fulfilled, (state, action) => { state.stats = action.payload; state.loading = false; })
+      .addCase(fetchStats.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
   },
 });
 

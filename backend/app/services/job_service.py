@@ -104,7 +104,39 @@ async def fetch_jsearch_jobs(
 
 # ─── DB helpers ───────────────────────────────────────────────────────────────
 
-def _job_dict_to_response(job_dict: dict) -> JobResponse:
+def _calculate_match_score(job_dict: dict, profile: Optional[Profile]) -> tuple[int, List[str], List[str]]:
+    """Calculate match percentage and skill gaps for a job given a user profile."""
+    if not profile:
+        return 0, [], []
+    
+    user_skills = profile.skills or []
+    job_skills = job_dict.get("skills_required", [])
+    
+    matching = []
+    missing = []
+    
+    # Skill overlap
+    if not job_skills:
+        skill_score = 0.5
+    else:
+        user_set = {s.lower() for s in user_skills}
+        job_set = {s.lower() for s in job_skills}
+        matching = list(user_set & job_set)
+        missing = [s for s in job_set if s.lower() not in user_set]
+        skill_score = len(matching) / len(job_set)
+        
+    # Experience match
+    experience_years = profile.experience_years or 0
+    exp_score = min(experience_years / 3.0, 1.0)
+    
+    # Education match
+    edu_score = 0.8 if profile.education else 0.2
+    
+    final_score = (skill_score * 0.6) + (exp_score * 0.2) + (edu_score * 0.2)
+    return int(final_score * 100), matching, missing
+
+
+def _job_dict_to_response(job_dict: dict, profile: Optional[Profile] = None) -> JobResponse:
     """Map a raw dict (from API or Mongo) to a JobResponse schema."""
     posted = job_dict.get("posted_at")
     if isinstance(posted, str):
@@ -112,6 +144,9 @@ def _job_dict_to_response(job_dict: dict) -> JobResponse:
             posted = datetime.fromisoformat(posted)
         except ValueError:
             posted = None
+            
+    match_percentage, matching, missing = _calculate_match_score(job_dict, profile)
+
     return JobResponse(
         id=str(job_dict.get("_id", "")),
         external_id=job_dict.get("external_id", ""),
@@ -127,10 +162,13 @@ def _job_dict_to_response(job_dict: dict) -> JobResponse:
         skills_required=job_dict.get("skills_required", []),
         apply_url=job_dict.get("apply_url"),
         posted_at=posted,
+        match_percentage=match_percentage,
+        matching_skills=matching,
+        missing_skills=missing
     )
 
 
-async def get_jobs(limit: int = 20) -> List[JobResponse]:
+async def get_jobs(user_id: Optional[str] = None, limit: int = 20) -> List[JobResponse]:
     """Return cached jobs; refresh from RemoteOK if cache is empty."""
     count = await Job.count()
     if count == 0:
@@ -142,11 +180,13 @@ async def get_jobs(limit: int = 20) -> List[JobResponse]:
                 await Job(**j).insert()
 
     jobs = await Job.find_all().limit(limit).to_list()
-    return [_job_dict_to_response(j.model_dump()) for j in jobs]
+    profile = await Profile.find_one(Profile.user_id == user_id) if user_id else None
+    return [_job_dict_to_response(j.model_dump(), profile) for j in jobs]
 
 
 async def search_jobs(
     query: str,
+    user_id: Optional[str] = None,
     location: Optional[str] = None,
     page: int = 1,
     limit: int = 20,
@@ -164,7 +204,36 @@ async def search_jobs(
             if query.lower() in j["title"].lower() or query.lower() in j["description"].lower()
         ][:limit]
 
-    return [_job_dict_to_response(j) for j in raw]
+    profile = await Profile.find_one(Profile.user_id == user_id) if user_id else None
+    return [_job_dict_to_response(j, profile) for j in raw]
+
+
+async def get_job_by_id(job_id: str, user_id: Optional[str] = None) -> JobResponse:
+    """Fetch a single job by ID (Mongo) or external_id."""
+    from bson import ObjectId
+    
+    # Try Mongo ID first
+    job = None
+    if len(job_id) == 24:
+        try:
+            job = await Job.get(ObjectId(job_id))
+        except:
+            pass
+            
+    # Try external_id
+    if not job:
+        job = await Job.find_one(Job.external_id == job_id)
+        
+    if not job:
+        # If not in cache, we'd ideally search specifically for it,
+        # but for now, we'll return 404.
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found in cache."
+        )
+        
+    profile = await Profile.find_one(Profile.user_id == user_id) if user_id else None
+    return _job_dict_to_response(job.model_dump(), profile)
 
 
 async def save_job(user_id: str, job_data: dict, notes: Optional[str] = None) -> SavedJob:

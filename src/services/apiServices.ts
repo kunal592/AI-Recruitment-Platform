@@ -44,6 +44,7 @@ export const resumeService = {
 
 export const jobService = {
   getJobs: (limit: number = 20) => api.get(`/jobs?limit=${limit}`),
+  getJobById: (id: string) => api.get(`/jobs/${id}`),
 
   searchJobs: (query: string, location?: string, page: number = 1) => {
     const params = new URLSearchParams({ q: query, page: String(page) });
@@ -58,6 +59,7 @@ export const jobService = {
     api.post('/jobs/save', { job_data: jobData, notes }),
 
   getSavedJobs: () => api.get('/jobs/saved'),
+  getStats: () => api.get('/jobs/stats'),
 
   addManualApplication: (data: {
     title: string;

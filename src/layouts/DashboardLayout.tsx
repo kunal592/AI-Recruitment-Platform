@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { Navbar } from '../components/Navbar';
+import { FeatureTour } from '../components/FeatureTour';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const DashboardLayout = () => {
@@ -9,6 +10,7 @@ export const DashboardLayout = () => {
 
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950 overflow-hidden transition-colors">
+      <FeatureTour />
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
