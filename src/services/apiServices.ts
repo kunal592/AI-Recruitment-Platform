@@ -71,6 +71,9 @@ export const jobService = {
 
   updateApplicationStatus: (id: string, status: string) =>
     api.patch(`/jobs/application/${id}/status`, { status }),
+
+  deleteApplication: (id: string) =>
+    api.delete(`/jobs/application/${id}`),
 };
 
 // ── AI Features ─────────────────────────────────────────────────────────────

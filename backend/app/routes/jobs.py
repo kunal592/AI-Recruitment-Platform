@@ -205,6 +205,26 @@ async def update_app_status(
     return {"success": True}
 
 
+@router.delete(
+    "/application/{application_id}",
+    summary="Delete an application from the tracker",
+)
+async def delete_app(
+    application_id: str,
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Permanently remove an application or bookmark."""
+    from app.models.job import SavedJob
+    from bson import ObjectId
+    
+    app = await SavedJob.get(ObjectId(application_id))
+    if not app or app.user_id != str(current_user.id):
+        raise HTTPException(status_code=404, detail="Application not found")
+        
+    await app.delete()
+    return {"success": True}
+
+
 @router.get(
     "/{job_id}",
     response_model=JobResponse,

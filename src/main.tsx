@@ -7,12 +7,16 @@ import { store } from './redux/store';
 import App from './App.tsx';
 import './index.css';
 
+import { ThemeProvider } from './context/ThemeContext.tsx';
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <App />
-        <Toaster position="top-right" />
+        <ThemeProvider>
+          <App />
+          <Toaster position="top-right" />
+        </ThemeProvider>
       </BrowserRouter>
     </Provider>
   </StrictMode>,

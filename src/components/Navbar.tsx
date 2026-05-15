@@ -1,7 +1,10 @@
-import { Search, Bell, Menu } from 'lucide-react';
+import { Search, Bell, Menu, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import { Button } from './ui/Button';
 
 export const Navbar = ({ onOpenSidebar }: { onOpenSidebar: () => void }) => {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <header className="sticky top-0 z-30 h-16 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-4 md:px-8 flex items-center justify-between transition-colors">
       <div className="flex items-center gap-4">
@@ -23,6 +26,16 @@ export const Navbar = ({ onOpenSidebar }: { onOpenSidebar: () => void }) => {
       </div>
       
       <div className="flex items-center gap-2 md:gap-4">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={toggleTheme}
+          className="text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </Button>
+
         <Button variant="ghost" size="icon" className="relative text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800">
           <Bell className="w-5 h-5" />
           <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>

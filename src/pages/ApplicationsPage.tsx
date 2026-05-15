@@ -9,8 +9,10 @@ import {
     MapPin,
     ArrowUpRight,
     Plus,
-    Loader2
+    Loader2,
+    Trash2
 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -29,6 +31,8 @@ export const ApplicationsPage = () => {
     const [applications, setApplications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+    const [selectedApp, setSelectedApp] = useState<any>(null);
     const [submitting, setSubmitting] = useState(false);
 
     // Form state
@@ -82,6 +86,17 @@ export const ApplicationsPage = () => {
             fetchApplications();
         } catch (error) {
             toast.error('Failed to update status');
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this application?')) return;
+        try {
+            await jobService.deleteApplication(id);
+            toast.success('Application removed');
+            fetchApplications();
+        } catch (error) {
+            toast.error('Failed to delete');
         }
     };
 
@@ -185,7 +200,15 @@ export const ApplicationsPage = () => {
                                                 </span>
                                             </td>
                                             <td className="px-8 py-6 text-right">
-                                                <Button variant="ghost" size="sm" className="rounded-xl font-bold opacity-0 group-hover:opacity-100 transition-opacity dark:text-slate-400 dark:hover:text-white">
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="sm" 
+                                                    onClick={() => {
+                                                        setSelectedApp(app);
+                                                        setIsDetailsOpen(true);
+                                                    }}
+                                                    className="rounded-xl font-bold opacity-0 group-hover:opacity-100 transition-opacity dark:text-slate-400 dark:hover:text-white"
+                                                >
                                                     Details <ArrowUpRight className="w-4 h-4 ml-2" />
                                                 </Button>
                                             </td>
@@ -251,6 +274,86 @@ export const ApplicationsPage = () => {
                         Add to Tracker
                     </Button>
                 </form>
+            </Modal>
+
+            {/* Application Details Modal */}
+            <Modal 
+                isOpen={isDetailsOpen} 
+                onClose={() => setIsDetailsOpen(false)} 
+                title="Application Details"
+            >
+                {selectedApp && (
+                    <div className="space-y-6">
+                        <div className="p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-1">
+                                {selectedApp.job_data?.title || selectedApp.title}
+                            </h3>
+                            <p className="text-slate-500 dark:text-slate-400 font-bold mb-4">
+                                {selectedApp.job_data?.company || selectedApp.company}
+                            </p>
+                            <div className="flex flex-wrap gap-4 text-sm font-medium">
+                                <span className="flex items-center text-slate-600 dark:text-slate-300">
+                                    <MapPin className="w-4 h-4 mr-1.5 opacity-50" />
+                                    {selectedApp.job_data?.location || selectedApp.location}
+                                </span>
+                                <span className="flex items-center text-slate-600 dark:text-slate-300">
+                                    <Calendar className="w-4 h-4 mr-1.5 opacity-50" />
+                                    Applied: {selectedApp.applied_at ? new Date(selectedApp.applied_at).toLocaleDateString() : 'N/A'}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-widest">Current Status</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                {Object.entries(statusConfig).map(([key, config]) => (
+                                    <button
+                                        key={key}
+                                        onClick={() => handleStatusUpdate(selectedApp.id, key)}
+                                        className={`px-4 py-3 rounded-xl text-xs font-black transition-all border-2 flex items-center justify-between ${
+                                            selectedApp.status === key 
+                                                ? 'bg-primary-600 border-primary-600 text-white shadow-lg' 
+                                                : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 text-slate-500 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        {config.label}
+                                        {selectedApp.status === key && <CheckCircle2 className="w-4 h-4" />}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-black text-slate-900 dark:text-slate-100 uppercase tracking-widest">Application Notes</label>
+                            <div className="p-4 bg-slate-50 dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl min-h-[100px] text-slate-700 dark:text-slate-300 font-medium whitespace-pre-wrap">
+                                {selectedApp.notes || "No notes added for this application."}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4 pt-4">
+                            {!selectedApp.is_manual && (
+                                <Link 
+                                    to={`/jobs/${selectedApp.job_data?.external_id || selectedApp.job_id}`}
+                                    className="flex-1"
+                                >
+                                    <Button variant="secondary" className="w-full h-12 rounded-xl font-bold">
+                                        View Job Description
+                                    </Button>
+                                </Link>
+                            )}
+                            <Button 
+                                variant="ghost" 
+                                className="h-12 px-6 rounded-xl font-bold text-red-500 hover:bg-red-50"
+                                onClick={() => {
+                                    handleDelete(selectedApp.id);
+                                    setIsDetailsOpen(false);
+                                }}
+                            >
+                                <Trash2 className="w-5 h-5" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </Modal>
         </div>
     );

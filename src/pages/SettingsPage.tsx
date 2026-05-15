@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Settings, Bell, Shield, Wallet, Monitor, Moon, Sun, Lock, Trash2, CheckCircle, Smartphone } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
@@ -10,7 +11,7 @@ type TabType = 'General' | 'Notifications' | 'Security' | 'Subscription';
 
 export const SettingsPage = () => {
     const [activeTab, setActiveTab] = useState<TabType>('General');
-    const [isDarkMode, setIsDarkMode] = useState(document.documentElement.classList.contains('dark'));
+    const { theme, setTheme } = useTheme();
     const [isLoading, setIsLoading] = useState(false);
 
     // AI Preferences State
@@ -47,15 +48,7 @@ export const SettingsPage = () => {
     }, []);
 
     const toggleTheme = (mode: 'light' | 'dark') => {
-        if (mode === 'dark') {
-            document.documentElement.classList.add('dark');
-            localStorage.setItem('theme', 'dark');
-            setIsDarkMode(true);
-        } else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem('theme', 'light');
-            setIsDarkMode(false);
-        }
+        setTheme(mode);
     };
 
     const handleSaveAI = async () => {
@@ -155,13 +148,13 @@ export const SettingsPage = () => {
                                         <div className="flex bg-slate-100 dark:bg-slate-800 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-700">
                                             <button 
                                                 onClick={() => toggleTheme('light')}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all ${!isDarkMode ? 'bg-white text-amber-600 shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all ${theme === 'light' ? 'bg-white text-amber-600 shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
                                             >
                                                 <Sun className="w-4 h-4" /> Light
                                             </button>
                                             <button 
                                                 onClick={() => toggleTheme('dark')}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all ${isDarkMode ? 'bg-slate-700 text-primary-400 shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-black transition-all ${theme === 'dark' ? 'bg-slate-700 text-primary-400 shadow-lg' : 'text-slate-500 hover:text-slate-900'}`}
                                             >
                                                 <Moon className="w-4 h-4" /> Dark
                                             </button>
