@@ -154,6 +154,8 @@ for the role: {job_title}.
 
 {job_description_section}
 
+{additional_context}
+
 Mix difficulty levels (easy/medium/hard) appropriately.
 For "technical": focus on coding, system design, algorithms, and relevant tech stack.
 For "hr": focus on behavioural, situational, culture fit.

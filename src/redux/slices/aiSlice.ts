@@ -66,6 +66,18 @@ export const generateStudyPlan = createAsyncThunk(
   }
 );
 
+export const fetchLatestStudyPlan = createAsyncThunk(
+  'ai/fetchLatestStudyPlan',
+  async (_, { rejectWithValue }) => {
+    try {
+      const res = await aiService.getLatestStudyPlan();
+      return res.data;
+    } catch (err: any) {
+      return rejectWithValue(err.parsedMessage || 'Failed to load latest study plan');
+    }
+  }
+);
+
 export const autoApply = createAsyncThunk(
   'ai/autoApply',
   async (
@@ -144,6 +156,12 @@ const aiSlice = createSlice({
       .addCase(generateStudyPlan.pending, (state) => { state.loading = true; state.error = null; })
       .addCase(generateStudyPlan.fulfilled, (state, action) => { state.studyPlan = action.payload; state.loading = false; })
       .addCase(generateStudyPlan.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
+
+    // fetchLatestStudyPlan
+    builder
+      .addCase(fetchLatestStudyPlan.pending, (state) => { state.loading = true; state.error = null; })
+      .addCase(fetchLatestStudyPlan.fulfilled, (state, action) => { state.studyPlan = action.payload; state.loading = false; })
+      .addCase(fetchLatestStudyPlan.rejected, (state, action) => { state.loading = false; state.error = action.payload as string; });
 
     // autoApply
     builder

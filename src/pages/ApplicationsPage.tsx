@@ -75,6 +75,16 @@ export const ApplicationsPage = () => {
         }
     };
 
+    const handleStatusUpdate = async (id: string, newStatus: string) => {
+        try {
+            await jobService.updateApplicationStatus(id, newStatus);
+            toast.success(`Status updated to ${newStatus}`);
+            fetchApplications();
+        } catch (error) {
+            toast.error('Failed to update status');
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-[400px] flex flex-col items-center justify-center space-y-4">
@@ -154,10 +164,16 @@ export const ApplicationsPage = () => {
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6">
-                                                <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black ${cfg.color}`}>
-                                                    <cfg.icon className="w-3 h-3 mr-2" />
-                                                    {cfg.label}
-                                                </span>
+                                                <select 
+                                                    value={app.status}
+                                                    onChange={(e) => handleStatusUpdate(app.id, e.target.value)}
+                                                    className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-black outline-none border-none cursor-pointer appearance-none ${cfg.color}`}
+                                                >
+                                                    <option value="applied" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Applied</option>
+                                                    <option value="interviewing" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Interviewing</option>
+                                                    <option value="offer" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Offer Received</option>
+                                                    <option value="rejected" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Rejected</option>
+                                                </select>
                                             </td>
                                             <td className="px-8 py-6 text-sm font-bold text-slate-600 dark:text-slate-300">
                                                 {app.applied_at ? new Date(app.applied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'N/A'}

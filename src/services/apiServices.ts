@@ -68,6 +68,9 @@ export const jobService = {
     status: string;
     notes?: string;
   }) => api.post('/jobs/manual-application', data),
+
+  updateApplicationStatus: (id: string, status: string) =>
+    api.patch(`/jobs/application/${id}/status`, { status }),
 };
 
 // ── AI Features ─────────────────────────────────────────────────────────────

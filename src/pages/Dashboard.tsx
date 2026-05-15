@@ -24,6 +24,7 @@ import { Button } from '../components/ui/Button';
 import { RootState, AppDispatch } from '../redux/store';
 import { fetchRecommendations, fetchStats } from '../redux/slices/jobsSlice';
 import { fetchProfile } from '../redux/slices/profileSlice';
+import { fetchLatestStudyPlan } from '../redux/slices/aiSlice';
 import { Link } from 'react-router-dom';
 
 const data = [
@@ -41,11 +42,13 @@ export const Dashboard = () => {
     const { user } = useSelector((state: RootState) => state.auth);
     const { recommendations, stats, loading } = useSelector((state: RootState) => state.jobs);
     const { profile } = useSelector((state: RootState) => state.profile);
+    const { studyPlan } = useSelector((state: RootState) => state.ai);
 
     useEffect(() => {
         dispatch(fetchRecommendations());
         dispatch(fetchStats());
         dispatch(fetchProfile());
+        dispatch(fetchLatestStudyPlan());
     }, [dispatch]);
 
     const displayName = user?.name || user?.full_name || 'there';
@@ -217,12 +220,20 @@ export const Dashboard = () => {
             <CardContent>
                 <div className="space-y-6">
                     <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full border-4 border-primary-500 flex items-center justify-center font-bold text-slate-900 dark:text-slate-100">
-                            84%
+                        <div className="w-12 h-12 rounded-full border-4 border-primary-500 flex items-center justify-center font-bold text-slate-900 dark:text-slate-100 bg-primary-500/10">
+                            {studyPlan ? '60%' : (profile?.skills?.length ? '40%' : '20%')}
                         </div>
                         <div>
-                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 uppercase">Profile Completion</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">Almost there! Add certifications to reach 100%.</p>
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 uppercase">
+                                {studyPlan?.target_role || profile?.job_title || 'Target Role'}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {studyPlan 
+                                    ? `Learning ${studyPlan.missing_skills?.length || 0} missing skills.` 
+                                    : (profile?.skills?.length 
+                                        ? `${profile.skills.length} skills identified. Start a roadmap!` 
+                                        : 'Upload resume to identify your skill gaps.')}
+                            </p>
                         </div>
                     </div>
                     <div className="space-y-3">
@@ -230,12 +241,22 @@ export const Dashboard = () => {
                         <div className="p-4 rounded-xl bg-primary-50 dark:bg-primary-900/10 border border-primary-100 dark:border-primary-900/30 flex items-start gap-3">
                             <CheckCircle className="w-5 h-5 text-primary-600 mt-0.5" />
                             <div>
-                                <p className="text-sm font-medium text-primary-900 dark:text-primary-100">Practice Mock Interview</p>
-                                <p className="text-xs text-primary-700 dark:text-primary-400 mt-1">Based on your recent applications for "Senior React Developer" roles.</p>
+                                <p className="text-sm font-medium text-primary-900 dark:text-primary-100">
+                                    {studyPlan ? 'Daily Learning Task' : 'Generate Study Plan'}
+                                </p>
+                                <p className="text-xs text-primary-700 dark:text-primary-400 mt-1">
+                                    {studyPlan 
+                                        ? `Current Topic: ${studyPlan.plan?.[0]?.topic || 'Foundation'}`
+                                        : 'Find a job and use "Roadmap to Hiring" to start.'}
+                                </p>
                             </div>
                         </div>
                     </div>
-                    <Link to="/mock-interview"><Button className="w-full shadow-lg shadow-primary-600/20">Open Copilot</Button></Link>
+                    <Link to={studyPlan ? "/study-plan" : "/jobs"}>
+                        <Button className="w-full shadow-lg shadow-primary-600/20">
+                            {studyPlan ? 'View Roadmap' : 'Browse Jobs'}
+                        </Button>
+                    </Link>
                 </div>
             </CardContent>
         </Card>

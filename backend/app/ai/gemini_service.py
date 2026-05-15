@@ -176,6 +176,7 @@ async def generate_mock_questions(
     interview_type: str = "mixed",
     job_description: Optional[str] = None,
     num_questions: int = 10,
+    additional_context: Optional[str] = "",
 ) -> List[str]:
     """
     Generate a list of interview questions.
@@ -194,6 +195,7 @@ async def generate_mock_questions(
         interview_type=interview_type,
         num_questions=num_questions,
         job_description_section=jd_section,
+        additional_context=additional_context or "",
     )
     raw = await client.generate_json(prompt)
     data = _parse_json_response(raw)

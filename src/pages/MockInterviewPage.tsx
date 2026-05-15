@@ -4,8 +4,17 @@ import { Button } from '../components/ui/Button';
 import { Card, CardContent } from '../components/ui/Card';
 import { interviewService } from '../services/apiServices';
 import toast from 'react-hot-toast';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState } from '../redux/store';
+import { useEffect } from 'react';
+import { fetchLatestStudyPlan } from '../redux/slices/aiSlice';
+import { fetchProfile } from '../redux/slices/profileSlice';
 
 export const MockInterviewPage = () => {
+    const dispatch = useDispatch();
+    const { studyPlan } = useSelector((state: RootState) => state.ai);
+    const { profile } = useSelector((state: RootState) => state.profile);
+
     const [messages, setMessages] = useState([
         { role: 'ai', content: "Hello! I'm your AI interviewer. Click 'Start Session' to begin a mock interview tailored to your target role." }
     ]);
@@ -16,11 +25,17 @@ export const MockInterviewPage = () => {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [isStarting, setIsStarting] = useState(false);
 
+    useEffect(() => {
+        if (!studyPlan) dispatch(fetchLatestStudyPlan() as any);
+        if (!profile) dispatch(fetchProfile() as any);
+    }, [dispatch, studyPlan, profile]);
+
     const handleStartSession = async () => {
         setIsStarting(true);
         try {
+            const targetRole = studyPlan?.target_role || profile?.job_title || 'Software Engineer';
             const res = await interviewService.startSession({
-                job_title: 'Senior Frontend Engineer',
+                job_title: targetRole,
                 interview_type: 'mixed',
                 num_questions: 5,
             });
@@ -98,6 +113,9 @@ export const MockInterviewPage = () => {
                     </div>
                     <div>
                         <h2 className="text-lg font-bold text-slate-900">AI Mock Interviewer</h2>
+                        <div className="flex items-center text-xs text-slate-500 font-medium">
+                            Target Role: <span className="text-primary-600 ml-1">{studyPlan?.target_role || profile?.job_title || 'Not Set'}</span>
+                        </div>
                         <div className="flex items-center text-xs text-slate-500">
                             <span className={`w-2 h-2 ${sessionId ? 'bg-green-500' : 'bg-slate-300'} rounded-full mr-2`}></span>
                             {sessionId ? `Active Session: Q${currentQuestionIndex + 1}/${questions.length}` : 'No active session'}

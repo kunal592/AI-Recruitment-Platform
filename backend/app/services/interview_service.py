@@ -25,14 +25,27 @@ async def create_interview_session(
 ) -> InterviewQuestionsResponse:
     """
     Generate interview questions and persist a new session.
-
-    Returns the session ID and list of questions.
+    Incorporate the latest study plan if available to focus on learned skills.
     """
+    from app.models.study_plan import StudyPlan
+    
+    # Fetch the most recent study plan for this user
+    latest_plan = await StudyPlan.find(
+        StudyPlan.user_id == user_id
+    ).sort("-created_at").first_or_none()
+    
+    plan_context = ""
+    if latest_plan:
+        topics = [p.get("topic", "") for p in latest_plan.plan]
+        plan_context = f"The user is currently following a study plan focused on: {', '.join(topics)}. " \
+                       f"Include questions that test these specific areas."
+
     questions: List[str] = await generate_mock_questions(
         job_title=payload.job_title,
         interview_type=payload.interview_type,
         job_description=payload.job_description,
         num_questions=payload.num_questions,
+        additional_context=plan_context
     )
 
     qa_pairs = [{"question": q, "answer": None, "evaluation": None, "score": None}
