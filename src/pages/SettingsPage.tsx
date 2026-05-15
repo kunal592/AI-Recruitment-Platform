@@ -3,6 +3,7 @@ import { Settings, Bell, Shield, Wallet, Monitor, Moon, Sun, Lock, Trash2, Check
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { profileService, settingsService } from '../services/apiServices';
 import toast from 'react-hot-toast';
 
 type TabType = 'General' | 'Notifications' | 'Security' | 'Subscription';
@@ -19,6 +20,32 @@ export const SettingsPage = () => {
         matchThreshold: 90
     });
 
+    // Password State
+    const [passwords, setPasswords] = useState({
+        current: '',
+        new: '',
+        confirm: ''
+    });
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const response = await profileService.getProfile();
+                if (response.data.ai_preferences) {
+                    const prefs = response.data.ai_preferences;
+                    setAiConfig({
+                        autoApply: prefs.auto_apply,
+                        optimizationLevel: prefs.optimization_level,
+                        matchThreshold: prefs.match_threshold
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to load profile settings", error);
+            }
+        };
+        loadProfile();
+    }, []);
+
     const toggleTheme = (mode: 'light' | 'dark') => {
         if (mode === 'dark') {
             document.documentElement.classList.add('dark');
@@ -31,17 +58,42 @@ export const SettingsPage = () => {
         }
     };
 
-    const handleSaveAI = () => {
-        setIsLoading(true);
-        setTimeout(() => {
-            setIsLoading(false);
+    const handleSaveAI = async () => {
+        try {
+            setIsLoading(true);
+            await profileService.updateAIPreferences({
+                auto_apply: aiConfig.autoApply,
+                optimization_level: aiConfig.optimizationLevel,
+                match_threshold: aiConfig.matchThreshold
+            });
             toast.success('AI preferences updated!');
-        }, 800);
+        } catch (error) {
+            toast.error('Failed to update AI preferences');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
-    const handlePasswordUpdate = (e: React.FormEvent) => {
+    const handlePasswordUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        toast.success('Security settings updated!');
+        if (passwords.new !== passwords.confirm) {
+            toast.error("New passwords don't match");
+            return;
+        }
+        
+        try {
+            setIsLoading(true);
+            await settingsService.updatePassword({
+                current_password: passwords.current,
+                new_password: passwords.new
+            });
+            toast.success('Security settings updated!');
+            setPasswords({ current: '', new: '', confirm: '' });
+        } catch (error) {
+            toast.error('Failed to update password. Check your current password.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -193,10 +245,31 @@ export const SettingsPage = () => {
                                 </CardHeader>
                                 <CardContent className="p-8">
                                     <form onSubmit={handlePasswordUpdate} className="space-y-6 max-w-lg">
-                                        <Input label="Current Password" type="password" placeholder="••••••••" required />
-                                        <Input label="New Password" type="password" placeholder="••••••••" required />
-                                        <Input label="Confirm New Password" type="password" placeholder="••••••••" required />
-                                        <Button type="submit" className="w-full rounded-2xl h-14 font-black">
+                                        <Input 
+                                            label="Current Password" 
+                                            type="password" 
+                                            placeholder="••••••••" 
+                                            required 
+                                            value={passwords.current}
+                                            onChange={(e) => setPasswords({...passwords, current: e.target.value})}
+                                        />
+                                        <Input 
+                                            label="New Password" 
+                                            type="password" 
+                                            placeholder="••••••••" 
+                                            required 
+                                            value={passwords.new}
+                                            onChange={(e) => setPasswords({...passwords, new: e.target.value})}
+                                        />
+                                        <Input 
+                                            label="Confirm New Password" 
+                                            type="password" 
+                                            placeholder="••••••••" 
+                                            required 
+                                            value={passwords.confirm}
+                                            onChange={(e) => setPasswords({...passwords, confirm: e.target.value})}
+                                        />
+                                        <Button type="submit" className="w-full rounded-2xl h-14 font-black" isLoading={isLoading}>
                                             Update Password
                                         </Button>
                                     </form>

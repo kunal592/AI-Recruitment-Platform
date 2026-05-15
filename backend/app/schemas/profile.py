@@ -77,3 +77,8 @@ class ProfileResponse(BaseModel):
     education: List[dict] = []
     certifications: List[str] = []
     projects: List[dict] = []
+    ai_preferences: dict = {
+        "auto_apply": False,
+        "optimization_level": "Balanced",
+        "match_threshold": 90
+    }

@@ -74,3 +74,20 @@ async def sync_resume_to_profile(
     from app.services.profile_service import sync_profile_from_resume
     profile = await sync_profile_from_resume(str(current_user.id), parsed_data)
     return ProfileResponse(**profile.model_dump(exclude={"id", "revision_id"}))
+
+
+from app.schemas.settings import AIPreferences
+from app.services.profile_service import update_ai_preferences
+
+@router.put(
+    "/ai-preferences",
+    response_model=ProfileResponse,
+    summary="Update AI automation preferences",
+)
+async def update_ai_prefs(
+    payload: AIPreferences,
+    current_user: User = Depends(get_current_user),
+) -> ProfileResponse:
+    """Update user's AI automation settings."""
+    profile = await update_ai_preferences(str(current_user.id), payload)
+    return ProfileResponse(**profile.model_dump(exclude={"id", "revision_id"}))

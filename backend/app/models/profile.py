@@ -64,6 +64,11 @@ class Profile(Document):
     education: List[dict] = Field(default_factory=list)
     certifications: List[str] = Field(default_factory=list)
     projects: List[dict] = Field(default_factory=list)
+    ai_preferences: dict = Field(default_factory=lambda: {
+        "auto_apply": False,
+        "optimization_level": "Balanced",
+        "match_threshold": 90
+    })
 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

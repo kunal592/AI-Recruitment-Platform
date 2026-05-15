@@ -96,3 +96,26 @@ async def login_user(email: str, password: str) -> TokenResponse:
         full_name=user.full_name,
         email=user.email,
     )
+
+
+from beanie import PydanticObjectId
+
+async def update_password(user_id: str, current_password: str, new_password: str) -> None:
+    """Verify current password and set a new one."""
+    user = await User.get(PydanticObjectId(user_id))
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found.",
+        )
+
+    if not verify_password(current_password, user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect.",
+        )
+
+    user.hashed_password = hash_password(new_password)
+    user.updated_at = datetime.utcnow()
+    await user.save()
+    logger.info("Password updated for user: {}", user.email)

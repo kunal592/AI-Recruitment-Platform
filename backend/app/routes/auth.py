@@ -60,3 +60,19 @@ async def get_me(current_user: User = Depends(get_current_user)) -> UserResponse
         is_active=current_user.is_active,
         is_verified=current_user.is_verified,
     )
+
+
+from app.schemas.settings import PasswordUpdate
+from app.services.auth_service import update_password
+
+@router.put(
+    "/password",
+    summary="Update user password",
+)
+async def update_user_password(
+    payload: PasswordUpdate,
+    current_user: User = Depends(get_current_user),
+) -> dict:
+    """Update the authenticated user's password."""
+    await update_password(str(current_user.id), payload.current_password, payload.new_password)
+    return {"success": True, "message": "Password updated successfully"}

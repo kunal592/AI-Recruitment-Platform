@@ -32,6 +32,7 @@ router = APIRouter(prefix="/ai", tags=["AI Features"])
 
 @router.get(
     "/latest-study-plan",
+    response_model=Optional[StudyPlanResponse],
     summary="Get the user's most recent study plan",
 )
 async def get_latest_plan_endpoint(
@@ -41,21 +42,20 @@ async def get_latest_plan_endpoint(
     try:
         plan = await get_latest_study_plan(str(current_user.id))
         if not plan:
-            return JSONResponse(content=None)
+            return None
         
-        data = {
-            "target_role": str(plan.target_role),
-            "duration_days": int(plan.duration_days),
-            "missing_skills": plan.missing_skills or [],
-            "plan": plan.plan or [],
-            "raw_plan_text": plan.raw_plan_text,
-        }
-        return JSONResponse(content=data)
+        return StudyPlanResponse(
+            target_role=plan.target_role,
+            duration_days=plan.duration_days,
+            missing_skills=plan.missing_skills or [],
+            plan=plan.plan or [],
+            raw_plan_text=plan.raw_plan_text,
+        )
     except Exception as e:
         logger.error(f"Error in get_latest_plan_endpoint: {str(e)}")
-        return JSONResponse(
+        raise HTTPException(
             status_code=500,
-            content={"success": False, "message": f"Internal Error: {str(e)}"}
+            detail=f"Failed to retrieve latest study plan: {str(e)}"
         )
 
 

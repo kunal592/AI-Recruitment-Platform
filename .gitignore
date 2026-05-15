@@ -74,3 +74,6 @@ backend/screenshots/
 # OS-specific
 .DS_Store
 Thumbs.db
+
+# Knowledge Graph
+graphify-out/

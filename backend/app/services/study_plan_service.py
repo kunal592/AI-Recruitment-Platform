@@ -51,4 +51,4 @@ async def create_study_plan(
 
 async def get_latest_study_plan(user_id: str) -> StudyPlan:
     """Retrieve the most recent study plan for the user."""
-    return await StudyPlan.find(StudyPlan.user_id == user_id).sort("-created_at").find_one()
+    return await StudyPlan.find(StudyPlan.user_id == user_id).sort("-created_at").first_or_none()

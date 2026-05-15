@@ -161,4 +161,11 @@ export const profileService = {
 
   syncResumeToProfile: (parsedData: Record<string, any>) => 
     api.post('/profile/sync-resume', parsedData),
+
+  updateAIPreferences: (data: { auto_apply: boolean; optimization_level: string; match_threshold: number }) =>
+    api.put('/profile/ai-preferences', data),
+};
+
+export const settingsService = {
+  updatePassword: (data: any) => api.put('/auth/password', data),
 };

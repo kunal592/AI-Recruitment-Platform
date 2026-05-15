@@ -103,3 +103,16 @@ async def sync_profile_from_resume(user_id: str, parsed_data: dict) -> Profile:
     await profile.set(update_data)
     logger.success("Profile fully synced from resume for user {}", user_id)
     return profile
+
+
+from app.schemas.settings import AIPreferences
+
+async def update_ai_preferences(user_id: str, payload: AIPreferences) -> Profile:
+    """Update AI automation settings in user profile."""
+    profile = await get_or_create_profile(user_id)
+    await profile.set({
+        "ai_preferences": payload.model_dump(),
+        "updated_at": datetime.utcnow()
+    })
+    logger.info("AI preferences updated for user: {}", user_id)
+    return profile
