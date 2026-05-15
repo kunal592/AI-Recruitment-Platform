@@ -1,0 +1,3 @@
+from app.resume_parser.extractor import extract_resume_text
+
+__all__ = ["extract_resume_text"]
