@@ -26,6 +26,7 @@ import { fetchRecommendations, fetchStats } from '../redux/slices/jobsSlice';
 import { fetchProfile } from '../redux/slices/profileSlice';
 import { fetchLatestStudyPlan } from '../redux/slices/aiSlice';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const data = [
   { name: 'Mon', apps: 4 },
@@ -75,8 +76,18 @@ export const Dashboard = () => {
           <p className="text-slate-500 dark:text-slate-400">Here's what's happening with your job search today.</p>
         </div>
         <div className="flex gap-3">
-          <Button variant="secondary" className="dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700">Download Report</Button>
-          <Link to="/jobs"><Button>Quick Apply</Button></Link>
+          <Button 
+            variant="secondary" 
+            className="dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700"
+            onClick={() => toast.success("Preparing your career report...", { icon: '📊' })}
+          >
+            Download Report
+          </Button>
+          <Link to="/jobs">
+            <Button onClick={() => toast.success("Scanning jobs for Quick Apply compatibility...", { icon: '⚡' })}>
+              Quick Apply
+            </Button>
+          </Link>
         </div>
       </div>
 

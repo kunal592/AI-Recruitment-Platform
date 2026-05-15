@@ -12,19 +12,28 @@ import toast from 'react-hot-toast';
 
 export const JobsPage = () => {
     const [searchQuery, setSearchQuery] = useState('');
+    const [location, setLocation] = useState('');
+    const [experience, setExperience] = useState('All Levels');
     const dispatch = useDispatch<AppDispatch>();
-    const { list: jobs, loading: isLoading } = useSelector((state: RootState) => state.jobs);
+    const { list: jobs, loading: isLoading, error } = useSelector((state: RootState) => state.jobs);
 
     useEffect(() => {
         dispatch(fetchJobs());
     }, [dispatch]);
 
     const handleSearch = async () => {
-        if (!searchQuery.trim()) {
-            dispatch(fetchJobs());
-            return;
-        }
-        dispatch(searchJobs(searchQuery));
+        dispatch(searchJobs({
+            q: searchQuery,
+            location: location !== '' ? location : undefined,
+            experience: experience !== 'All Levels' ? experience : undefined
+        }));
+    };
+
+    const handleClearFilters = () => {
+        setSearchQuery('');
+        setLocation('');
+        setExperience('All Levels');
+        dispatch(fetchJobs());
     };
 
     const handleSaveJob = async (job: any) => {
@@ -47,39 +56,80 @@ export const JobsPage = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <Input 
-                        label="Job Title or Keywords" 
-                        placeholder="e.g. Software Engineer"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleSearch()}
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                    />
-                    <Input 
-                        label="Location" 
-                        placeholder="e.g. Remote or City" 
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
-                    />
-                    <div className="space-y-1.5">
-                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Experience Level</label>
-                        <select className="flex h-10 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 text-slate-900 dark:text-slate-100">
-                            <option>All Levels</option>
-                            <option>Junior</option>
-                            <option>Mid-Level</option>
-                            <option>Senior</option>
-                            <option>Lead</option>
-                        </select>
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-2xl shadow-slate-200/50 dark:shadow-none transition-all">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-end">
+                    <div className="lg:col-span-1 space-y-2">
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Role or Keyword</label>
+                        <div className="relative">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input 
+                                type="text"
+                                placeholder="e.g. Frontend Engineer"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleSearch()}
+                                className="w-full h-14 pl-11 pr-4 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none transition-all"
+                            />
+                        </div>
                     </div>
+                    
+                    <div className="lg:col-span-1 space-y-2">
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Location</label>
+                        <div className="relative">
+                            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <input 
+                                type="text"
+                                placeholder="raipur"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                onKeyDown={(e: React.KeyboardEvent) => e.key === 'Enter' && handleSearch()}
+                                className="w-full h-14 pl-11 pr-4 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="lg:col-span-1 space-y-2">
+                        <label className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1">Experience</label>
+                        <div className="relative">
+                            <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <select 
+                                value={experience}
+                                onChange={(e) => setExperience(e.target.value)}
+                                className="w-full h-14 pl-11 pr-4 bg-slate-50 dark:bg-slate-800/50 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-sm font-bold text-slate-900 dark:text-slate-100 focus:border-primary-500 outline-none transition-all appearance-none"
+                            >
+                                <option>All Levels</option>
+                                <option>Junior</option>
+                                <option>Mid-Level</option>
+                                <option>Senior</option>
+                                <option>Lead</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <Button 
+                        className="h-14 w-full rounded-2xl font-black text-base shadow-xl shadow-primary-600/20" 
+                        onClick={handleSearch} 
+                        isLoading={isLoading}
+                    >
+                        <Search className="w-5 h-5 mr-2" /> Search Jobs
+                    </Button>
                 </div>
-                <Button className="h-10 px-8 rounded-full shadow-lg shadow-primary-600/20" onClick={handleSearch} isLoading={isLoading}>
-                    <Search className="w-4 h-4 mr-2" /> Search Jobs
-                </Button>
             </div>
 
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 transition-colors">Found {jobs.length} Jobs</h2>
+                <div className="flex items-center gap-4">
+                    <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 transition-colors">
+                        {jobs.length > 0 ? `Found ${jobs.length} Jobs` : 'No matches found'}
+                    </h2>
+                    {(searchQuery || location || experience !== 'All Levels') && (
+                        <button 
+                            onClick={handleClearFilters}
+                            className="text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
+                        >
+                            Clear all filters
+                        </button>
+                    )}
+                </div>
                 <div className="flex gap-2">
                     <Button variant="secondary" size="sm" className="dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700">
                         <Filter className="w-4 h-4 mr-2" /> Sort by: Newest
@@ -87,15 +137,32 @@ export const JobsPage = () => {
                 </div>
             </div>
 
+            {error && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-xl text-red-600 dark:text-red-400 text-sm font-medium">
+                    {error}
+                </div>
+            )}
+
             {isLoading ? (
                 <div className="flex items-center justify-center py-20">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-600"></div>
                 </div>
             ) : jobs.length === 0 ? (
-                <div className="text-center py-20 text-slate-400 dark:text-slate-600">
-                    <Search className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                    <p className="text-lg font-medium">No jobs found</p>
-                    <p className="text-sm">Try adjusting your search criteria</p>
+                <div className="text-center py-32 bg-white dark:bg-slate-900/50 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-800">
+                    <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Search className="w-10 h-10 text-slate-300 dark:text-slate-600" />
+                    </div>
+                    <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 mb-2">No matching jobs found</h3>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium max-w-sm mx-auto mb-8">
+                        We couldn't find any jobs matching your current filters. Try removing some keywords or expanding your location.
+                    </p>
+                    <Button 
+                        variant="secondary" 
+                        onClick={handleClearFilters}
+                        className="rounded-2xl px-8 h-12 font-bold dark:bg-slate-800 dark:text-white dark:border-slate-700"
+                    >
+                        Clear All Filters
+                    </Button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20">

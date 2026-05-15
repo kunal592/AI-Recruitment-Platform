@@ -46,9 +46,10 @@ export const jobService = {
   getJobs: (limit: number = 20) => api.get(`/jobs?limit=${limit}`),
   getJobById: (id: string) => api.get(`/jobs/${id}`),
 
-  searchJobs: (query: string, location?: string, page: number = 1) => {
-    const params = new URLSearchParams({ q: query, page: String(page) });
+  searchJobs: (query: string, location?: string, experience?: string) => {
+    const params = new URLSearchParams({ q: query });
     if (location) params.append('location', location);
+    if (experience) params.append('experience', experience);
     return api.get(`/jobs/search?${params.toString()}`);
   },
 

@@ -50,14 +50,20 @@ async def list_jobs(
     summary="Search jobs from JSearch (RapidAPI)",
 )
 async def search(
-    q: str = Query(..., min_length=2, description="Job title or keyword"),
+    q: Optional[str] = Query(default=None, description="Job title or keyword"),
     location: Optional[str] = Query(default=None),
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=20, ge=1, le=50),
     current_user: User = Depends(get_current_user),
 ) -> List[JobResponse]:
     """Search live job listings using the JSearch API."""
-    return await search_jobs(query=q, user_id=str(current_user.id), location=location, page=page, limit=limit)
+    search_q = q
+    if not search_q or len(search_q) < 2:
+        from app.models.profile import Profile
+        profile = await Profile.find_one(Profile.user_id == str(current_user.id))
+        search_q = profile.job_title if (profile and profile.job_title) else "Software Engineer"
+        
+    return await search_jobs(query=search_q, user_id=str(current_user.id), location=location, page=page, limit=limit)
 
 
 @router.get(

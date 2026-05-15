@@ -97,9 +97,9 @@ export const fetchJobById = createAsyncThunk(
 
 export const searchJobs = createAsyncThunk(
   'jobs/searchJobs',
-  async (query: string, { rejectWithValue }) => {
+  async (params: { q: string; location?: string; experience?: string }, { rejectWithValue }) => {
     try {
-      const res = await jobService.searchJobs(query);
+      const res = await jobService.searchJobs(params.q, params.location, params.experience);
       return (res.data as any[]).map(normalizeJob);
     } catch (err: any) {
       return rejectWithValue(err.parsedMessage || 'Search failed');

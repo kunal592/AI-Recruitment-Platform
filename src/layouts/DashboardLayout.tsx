@@ -14,7 +14,7 @@ export const DashboardLayout = () => {
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <Navbar onOpenSidebar={() => setIsSidebarOpen(true)} />
+        {/* Navbar removed as requested */}
         
         <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-slate-950">
           <AnimatePresence mode="wait">
