@@ -61,7 +61,10 @@ async def search(
     if not search_q or len(search_q) < 2:
         from app.models.profile import Profile
         profile = await Profile.find_one(Profile.user_id == str(current_user.id))
-        search_q = profile.job_title if (profile and profile.job_title) else "Software Engineer"
+        if profile and profile.preferred_job_titles:
+            search_q = profile.preferred_job_titles[0]
+        else:
+            search_q = "Software Engineer"
         
     return await search_jobs(query=search_q, user_id=str(current_user.id), location=location, page=page, limit=limit)
 

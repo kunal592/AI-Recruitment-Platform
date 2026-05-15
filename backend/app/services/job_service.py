@@ -205,6 +205,14 @@ async def search_jobs(
         ][:limit]
 
     profile = await Profile.find_one(Profile.user_id == user_id) if user_id else None
+    
+    # Cache results to prevent 404 on details page
+    for j in raw:
+        exists = await Job.find_one(Job.external_id == j["external_id"])
+        if not exists:
+            # Add a flag or just insert
+            await Job(**j).insert()
+            
     return [_job_dict_to_response(j, profile) for j in raw]
 
 

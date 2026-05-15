@@ -156,9 +156,10 @@ export const JobDetailsPage = () => {
                                         <div className="w-1.5 h-6 bg-primary-600 rounded-full mr-3"></div>
                                         Job Description
                                     </h3>
-                                    <p className="text-slate-600 dark:text-slate-300 leading-relaxed text-base font-medium">
-                                        {jobDescription}
-                                    </p>
+                                    <div 
+                                        className="text-slate-600 dark:text-slate-300 leading-relaxed text-base font-medium prose prose-slate dark:prose-invert max-w-none"
+                                        dangerouslySetInnerHTML={{ __html: jobDescription }}
+                                    />
                                 </div>
 
                                 <div>
