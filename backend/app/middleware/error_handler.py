@@ -33,11 +33,16 @@ def register_exception_handlers(app: FastAPI) -> None:
             for e in exc.errors()
         ]
         logger.warning("Validation error on {} {}: {}", request.method, request.url.path, errors)
-        return _error_response(
+        response = _error_response(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             "Request validation failed.",
             details=errors,
         )
+        origin = request.headers.get("origin")
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
 
     # ── HTTPException (raised intentionally in services) ─────────────────────
     @app.exception_handler(HTTPException)
@@ -48,7 +53,12 @@ def register_exception_handlers(app: FastAPI) -> None:
             "HTTPException {} on {} {}: {}",
             exc.status_code, request.method, request.url.path, exc.detail,
         )
-        return _error_response(exc.status_code, str(exc.detail))
+        response = _error_response(exc.status_code, str(exc.detail))
+        origin = request.headers.get("origin")
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+        return response
 
     # ── Catch-all for unexpected errors → 500 ─────────────────────────────────
     @app.exception_handler(Exception)
@@ -59,7 +69,19 @@ def register_exception_handlers(app: FastAPI) -> None:
             "Unhandled exception on {} {}: {}",
             request.method, request.url.path, exc,
         )
-        return _error_response(
+        response = _error_response(
             status.HTTP_500_INTERNAL_SERVER_ERROR,
             "An unexpected internal error occurred. Please try again later.",
         )
+        
+        # Manually add CORS headers if the request has an Origin header.
+        # This is a fallback because Starlette's CORSMiddleware sometimes 
+        # skips error responses from exception handlers.
+        origin = request.headers.get("origin")
+        if origin:
+            response.headers["Access-Control-Allow-Origin"] = origin
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            response.headers["Access-Control-Allow-Methods"] = "*"
+            response.headers["Access-Control-Allow-Headers"] = "*"
+            
+        return response

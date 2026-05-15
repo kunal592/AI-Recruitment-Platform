@@ -139,8 +139,7 @@ Return a JSON object:
       "tasks": ["<task description>", ...],
       "resources": ["<resource name / url>", ...]
     }}
-  ],
-  "raw_plan_text": "<human-readable full roadmap as plain text>"
+  ]
 }}
 """
 

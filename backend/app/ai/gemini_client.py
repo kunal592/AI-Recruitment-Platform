@@ -33,7 +33,8 @@ class GeminiClient:
         self,
         prompt: str,
         temperature: float = 0.4,
-        max_tokens: int = 4096,
+        max_tokens: int = 8192,
+        response_mime_type: Optional[str] = None,
     ) -> str:
         """
         Send a prompt to Gemini with multi-model fallback.
@@ -56,12 +57,16 @@ class GeminiClient:
             try:
                 logger.debug("Attempting Gemini generation with model: {}...", model_name)
                 model = genai.GenerativeModel(model_name)
+                config_params = {
+                    "temperature": temperature,
+                    "max_output_tokens": max_tokens,
+                }
+                if response_mime_type:
+                    config_params["response_mime_type"] = response_mime_type
+
                 response = await model.generate_content_async(
                     prompt,
-                    generation_config=genai.types.GenerationConfig(
-                        temperature=temperature,
-                        max_output_tokens=max_tokens,
-                    ),
+                    generation_config=genai.types.GenerationConfig(**config_params),
                 )
                 
                 if not response or not response.text:
@@ -122,6 +127,7 @@ class GeminiClient:
     ) -> str:
         """
         Wrapper that appends a JSON-only instruction to the prompt.
+        Uses response_mime_type='application/json' to ensure valid output.
         """
         json_prompt = (
             prompt
@@ -129,7 +135,12 @@ class GeminiClient:
             "No markdown fences, no explanation text. "
             "If you cannot provide valid JSON, return {}."
         )
-        return await self.generate(json_prompt, temperature=temperature)
+        return await self.generate(
+            json_prompt, 
+            temperature=temperature, 
+            max_tokens=8192,
+            response_mime_type="application/json"
+        )
 
 
 @lru_cache()

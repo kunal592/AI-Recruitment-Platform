@@ -22,7 +22,9 @@ export const StudyPlanPage = () => {
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isMentorModalOpen, setIsMentorModalOpen] = useState(false);
     const [targetRole, setTargetRole] = useState('');
+    const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
 
     const fetchLatestPlan = async () => {
         try {
@@ -31,6 +33,9 @@ export const StudyPlanPage = () => {
             setPlan(response.data);
             if (response.data) {
                 setTargetRole(response.data.target_role);
+                // Load completed tasks from localStorage if available
+                const saved = localStorage.getItem(`plan_${response.data.id}_tasks`);
+                if (saved) setCompletedTasks(JSON.parse(saved));
             }
         } catch (error) {
             console.error('Error fetching study plan:', error);
@@ -50,12 +55,44 @@ export const StudyPlanPage = () => {
                 duration_days: 30
             });
             setPlan(response.data);
+            setCompletedTasks({}); // Reset tasks for new plan
             setIsModalOpen(false);
             toast.success('Your personalized study plan is ready!');
         } catch (error) {
             toast.error('Failed to generate study plan. Please try again.');
         } finally {
             setIsGenerating(false);
+        }
+    };
+
+    const toggleTask = (stepIndex: number, taskIndex: number) => {
+        const key = `${stepIndex}-${taskIndex}`;
+        const newTasks = { ...completedTasks, [key]: !completedTasks[key] };
+        setCompletedTasks(newTasks);
+        if (plan?.id) {
+            localStorage.setItem(`plan_${plan.id}_tasks`, JSON.stringify(newTasks));
+        }
+    };
+
+    const markGoalComplete = () => {
+        const newTasks: Record<string, boolean> = {};
+        plan.plan.forEach((step: any, i: number) => {
+            (step.tasks || []).forEach((_: any, j: number) => {
+                newTasks[`${i}-${j}`] = true;
+            });
+        });
+        setCompletedTasks(newTasks);
+        toast.success('Congratulations! Goal marked as completed.');
+    };
+
+    const handleResourceClick = (res: string) => {
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const match = res.match(urlRegex);
+        if (match) {
+            window.open(match[0], '_blank');
+        } else {
+            // Search Google if no URL
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(res)}`, '_blank');
         }
     };
 
@@ -112,7 +149,11 @@ export const StudyPlanPage = () => {
                             <Button variant="secondary" className="rounded-xl h-12 px-6 font-bold dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:hover:bg-slate-700" onClick={() => setIsModalOpen(true)}>
                                 <Sparkles className="w-4 h-4 mr-2" /> New Roadmap
                             </Button>
-                            <Button variant="secondary" className="rounded-xl h-12 px-6 font-bold dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:hover:bg-slate-700">
+                            <Button 
+                                variant="secondary" 
+                                className="rounded-xl h-12 px-6 font-bold dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:hover:bg-slate-700"
+                                onClick={markGoalComplete}
+                            >
                                 <CheckCircle2 className="w-4 h-4 mr-2" /> Mark Goal as Completed
                             </Button>
                         </div>
@@ -132,9 +173,9 @@ export const StudyPlanPage = () => {
                                         <span className={`text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg w-fit ${
                                             i === 0 ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
                                         }`}>
-                                            Day {step.day_range}
+                                            Step {i + 1}
                                         </span>
-                                        <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{step.topic}</h3>
+                                        <h3 className="text-xl font-black text-slate-900 dark:text-slate-100 tracking-tight">{step.topic || step.theme}</h3>
                                     </div>
 
                                     <Card className={`overflow-hidden shadow-xl shadow-slate-200/50 dark:shadow-none ${i === 0 ? 'border-primary-200 dark:border-primary-900/30 dark:bg-slate-900' : 'dark:bg-slate-900 dark:border-slate-800'}`}>
@@ -143,21 +184,38 @@ export const StudyPlanPage = () => {
                                                 <div className="space-y-4">
                                                     <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Key Tasks</p>
                                                     <div className="space-y-3">
-                                                        {(step.tasks || []).map((task: string, j: number) => (
-                                                            <div key={j} className="flex items-start text-sm text-slate-600 dark:text-slate-300 gap-3 group cursor-pointer hover:text-primary-600 transition-colors font-medium">
-                                                                <Circle className="w-4 h-4 mt-0.5 text-slate-200 dark:text-slate-700 group-hover:text-primary-400 flex-shrink-0" />
-                                                                {task}
-                                                            </div>
-                                                        ))}
+                                                        {(step.tasks || []).map((task: string, j: number) => {
+                                                            const isDone = completedTasks[`${i}-${j}`];
+                                                            return (
+                                                                <div 
+                                                                    key={j} 
+                                                                    className={`flex items-start text-sm gap-3 group cursor-pointer transition-all font-medium ${
+                                                                        isDone ? 'text-slate-400 dark:text-slate-500 line-through' : 'text-slate-600 dark:text-slate-300 hover:text-primary-600'
+                                                                    }`}
+                                                                    onClick={() => toggleTask(i, j)}
+                                                                >
+                                                                    {isDone ? (
+                                                                        <CheckCircle2 className="w-4 h-4 mt-0.5 text-primary-500 flex-shrink-0" />
+                                                                    ) : (
+                                                                        <Circle className="w-4 h-4 mt-0.5 text-slate-200 dark:text-slate-700 group-hover:text-primary-400 flex-shrink-0" />
+                                                                    )}
+                                                                    {task}
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
                                                 </div>
                                                 <div className="space-y-4">
                                                     <p className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">Learning Resources</p>
                                                     <div className="space-y-3">
                                                         {(step.resources || []).map((res: string, j: number) => (
-                                                            <div key={j} className="flex items-center text-sm text-primary-600 dark:text-primary-400 gap-3 group cursor-pointer hover:underline font-bold bg-primary-50/50 dark:bg-primary-900/10 px-4 py-2 rounded-xl border border-primary-100/50 dark:border-primary-900/20">
+                                                            <div 
+                                                                key={j} 
+                                                                className="flex items-center text-sm text-primary-600 dark:text-primary-400 gap-3 group cursor-pointer hover:underline font-bold bg-primary-50/50 dark:bg-primary-900/10 px-4 py-2 rounded-xl border border-primary-100/50 dark:border-primary-900/20"
+                                                                onClick={() => handleResourceClick(res)}
+                                                            >
                                                                 <ExternalLink className="w-3.5 h-3.5" />
-                                                                {res}
+                                                                <span className="truncate">{res.split(': http')[0]}</span>
                                                             </div>
                                                         ))}
                                                     </div>
@@ -167,11 +225,23 @@ export const StudyPlanPage = () => {
                                                 <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                                                     <div className="flex items-center gap-4">
                                                         <div className="w-32 h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                                            <div className="w-1/3 h-full bg-primary-600 rounded-full"></div>
+                                                            <div 
+                                                                className="h-full bg-primary-600 rounded-full transition-all duration-500"
+                                                                style={{ width: `${(Object.keys(completedTasks).filter(k => k.startsWith('0-')).length / (step.tasks?.length || 1)) * 100}%` }}
+                                                            ></div>
                                                         </div>
                                                         <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">Current Focus</p>
                                                     </div>
-                                                    <Button className="rounded-xl h-11 px-6 font-black shadow-lg shadow-primary-600/10">Start Learning</Button>
+                                                    <Button 
+                                                        className="rounded-xl h-11 px-6 font-black shadow-lg shadow-primary-600/10"
+                                                        onClick={() => {
+                                                            const firstRes = step.resources?.[0];
+                                                            if (firstRes) handleResourceClick(firstRes);
+                                                            else toast.success('Starting your first lesson!');
+                                                        }}
+                                                    >
+                                                        Start Learning
+                                                    </Button>
                                                 </div>
                                             )}
                                         </CardContent>
@@ -204,7 +274,10 @@ export const StudyPlanPage = () => {
                                         </div>
                                         <h3 className="font-black text-xl mb-3 tracking-tight">Need a Mentor?</h3>
                                         <p className="text-slate-400 text-sm mb-6 leading-relaxed font-medium">Schedule a 15-min deep-dive with an expert in <span className="text-white">{plan.target_role}</span>.</p>
-                                        <Button className="w-full bg-white text-slate-900 hover:bg-slate-100 border-none h-14 rounded-2xl font-black group">
+                                        <Button 
+                                            className="w-full bg-white text-slate-900 hover:bg-slate-100 border-none h-14 rounded-2xl font-black group"
+                                            onClick={() => setIsMentorModalOpen(true)}
+                                        >
                                             Book Session <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                                         </Button>
                                     </div>
@@ -256,6 +329,31 @@ export const StudyPlanPage = () => {
                         {isGenerating ? 'Building Your Path...' : 'Generate My Roadmap'}
                     </Button>
                 </form>
+            </Modal>
+
+            {/* Mentor Modal (Coming Soon) */}
+            <Modal
+                isOpen={isMentorModalOpen}
+                onClose={() => setIsMentorModalOpen(false)}
+                title="1-on-1 Mentorship"
+            >
+                <div className="flex flex-col items-center justify-center py-10 text-center space-y-6">
+                    <div className="w-24 h-24 bg-primary-50 dark:bg-primary-900/20 rounded-full flex items-center justify-center">
+                        <Sparkles className="w-12 h-12 text-primary-500 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-black text-slate-900 dark:text-slate-100">Coming Soon!</h2>
+                        <p className="text-slate-500 dark:text-slate-400 font-medium max-w-xs mx-auto">
+                            We're partnering with industry experts to bring you high-quality mentorship. Stay tuned!
+                        </p>
+                    </div>
+                    <Button 
+                        onClick={() => setIsMentorModalOpen(false)}
+                        className="rounded-2xl px-10 h-14 font-black"
+                    >
+                        Got it!
+                    </Button>
+                </div>
             </Modal>
         </div>
     );

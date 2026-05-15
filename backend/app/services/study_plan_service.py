@@ -36,7 +36,6 @@ async def create_study_plan(
         missing_skills=result.get("missing_skills", []),
         duration_days=payload.duration_days,
         plan=result.get("plan", []),
-        raw_plan_text=result.get("raw_plan_text", ""),
     )
     await plan_doc.insert()
 
@@ -45,7 +44,6 @@ async def create_study_plan(
         duration_days=payload.duration_days,
         missing_skills=result.get("missing_skills", []),
         plan=result.get("plan", []),
-        raw_plan_text=result.get("raw_plan_text", ""),
     )
 
 

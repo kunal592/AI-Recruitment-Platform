@@ -25,15 +25,57 @@ from app.ai.prompts import (
 def _parse_json_response(text: str) -> Dict[str, Any]:
     """
     Safely extract JSON from a Gemini response.
-    Handles markdown code fences Gemini sometimes adds despite instructions.
+    Handles markdown code fences and potential truncation.
     """
-    # Strip ```json ... ``` or ``` ... ``` blocks
-    cleaned = re.sub(r"```(?:json)?\s*", "", text).replace("```", "").strip()
+    # 1. Try to find content between triple backticks if present
+    match = re.search(r"```(?:json)?\s*([\s\S]*?)(?:```|$)", text)
+    if match:
+        cleaned = match.group(1).strip()
+    else:
+        cleaned = text.strip()
+
+    # 2. Try standard parsing
     try:
         return json.loads(cleaned)
-    except json.JSONDecodeError as exc:
-        logger.warning("JSON decode error: {} | raw: {}", exc, cleaned[:300])
-        raise ValueError(f"AI returned non-JSON response: {cleaned[:200]}") from exc
+    except json.JSONDecodeError:
+        # 3. If it failed, it might be truncated. Try to close unclosed brackets.
+        try:
+            return _fix_truncated_json(cleaned)
+        except Exception as e:
+            logger.warning("JSON decode error: {} | raw: {}", e, cleaned[:300])
+            raise ValueError(f"AI returned invalid or truncated JSON: {cleaned[:200]}...") from e
+
+def _fix_truncated_json(json_str: str) -> Dict[str, Any]:
+    """Attempts to fix truncated JSON by closing open braces/brackets/quotes."""
+    stack = []
+    in_string = False
+    escaped = False
+    fixed = json_str
+    
+    for char in json_str:
+        if char == '"' and not escaped:
+            in_string = not in_string
+        elif not in_string:
+            if char == '{': stack.append('}')
+            elif char == '[': stack.append(']')
+            elif char == '}' or char == ']':
+                if stack and stack[-1] == char:
+                    stack.pop()
+        
+        if char == '\\':
+            escaped = not escaped
+        else:
+            escaped = False
+            
+    # If we are inside a string, close it
+    if in_string:
+        fixed += '"'
+    
+    # Close any remaining open braces/brackets
+    while stack:
+        fixed += stack.pop()
+    
+    return json.loads(fixed)
 
 
 # ─── Resume Parsing ───────────────────────────────────────────────────────────
