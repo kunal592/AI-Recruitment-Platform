@@ -1,4 +1,5 @@
 # HireAI: AI-Powered Recruitment Automation Platform
+> **Powered by [KDX Labs](https://www.kdxlabs.cloud)**
 
 HireAI is a comprehensive full-stack platform designed to automate the entire job hunt lifecycle. From parsing resumes and generating personalised study plans to tracking applications and preparing for interviews, HireAI leverages cutting-edge AI to give candidates a competitive edge.
 
