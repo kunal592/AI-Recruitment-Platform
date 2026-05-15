@@ -16,7 +16,7 @@ A production-grade FastAPI backend that automates the entire job-hunting lifecyc
 | 6 | AI Job Recommendations | `GET /jobs/recommendations` |
 | 7 | AI Resume Customiser | `POST /ai/customize-resume` |
 | 8 | AI Email Generator | `POST /ai/generate-email` |
-| 9 | AI Study Plan | `POST /ai/study-plan` |
+| 9 | AI Study Plan | `POST /ai/study-plan` · `GET /ai/latest-study-plan` |
 | 10 | Mock Interview Chatbot | `POST /interview/questions` · `POST /interview/evaluate` |
 | 11 | Playwright Auto-Apply | `POST /automation/auto-apply` |
 | 12 | Reminder Scheduler | `POST /scheduler/reminder` · `DELETE /scheduler/reminder/{id}` |
