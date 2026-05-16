@@ -60,13 +60,7 @@ export const Dashboard = () => {
         name: skill,
         val: Math.floor(Math.random() * 30) + 70, // Will be replaced with real ATS data
     }));
-    const fallbackMatchData = [
-      { name: 'React', val: 95 },
-      { name: 'Node.js', val: 80 },
-      { name: 'Python', val: 65 },
-      { name: 'AWS', val: 70 },
-      { name: 'UI Design', val: 90 },
-    ];
+    const fallbackMatchData: any[] = [];
 
   return (
     <div className="space-y-8">
@@ -121,8 +115,8 @@ export const Dashboard = () => {
             <CardTitle className="dark:text-slate-100">Application Activity</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
+            <div className="h-[300px] w-full overflow-hidden">
+              <ResponsiveContainer width="100%" height="100%" minHeight={300}>
                 <AreaChart data={data}>
                   <defs>
                     <linearGradient id="colorApps" x1="0" y1="0" x2="0" y2="1">
@@ -155,20 +149,30 @@ export const Dashboard = () => {
             <CardTitle className="dark:text-slate-100">Skill Match Readiness</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={matchData.length > 0 ? matchData : fallbackMatchData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" className="dark:stroke-slate-800" />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={80} />
-                  <Tooltip 
-                    cursor={{fill: 'transparent'}}
-                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                  />
-                  <Bar dataKey="val" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={20} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+            {matchData.length > 0 ? (
+                <div className="h-[300px] w-full overflow-hidden">
+                    <ResponsiveContainer width="100%" height="100%" minHeight={300}>
+                        <BarChart data={matchData} layout="vertical">
+                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" className="dark:stroke-slate-800" />
+                            <XAxis type="number" hide />
+                            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} width={80} />
+                            <Tooltip 
+                                cursor={{fill: 'transparent'}}
+                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                            />
+                            <Bar dataKey="val" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={20} />
+                        </BarChart>
+                    </ResponsiveContainer>
+                </div>
+            ) : (
+                <div className="h-[300px] flex flex-col items-center justify-center text-center p-6">
+                    <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                        <Trophy className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                    </div>
+                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">No Skills Identified</h4>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Upload your resume to see how your skills match against current market demands.</p>
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -201,25 +205,16 @@ export const Dashboard = () => {
                             </div>
                         </Link>
                     )) : (
-                        [
-                            { title: 'Frontend Engineer', co: 'Google', location: 'Mountain View, CA', match: 98, type: 'Full-time' },
-                            { title: 'Senior React Developer', co: 'Airbnb', location: 'Remote', match: 92, type: 'Contract' },
-                            { title: 'Product UI Designer', co: 'Figma', location: 'San Francisco, CA', match: 89, type: 'Full-time' },
-                        ].map((job, i) => (
-                            <div key={i} className="flex items-center p-4 rounded-xl border border-slate-100 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-900/50 transition-all group">
-                                <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-slate-800 mr-4 flex-shrink-0"></div>
-                                <div className="flex-1 min-w-0">
-                                    <h4 className="font-semibold text-slate-900 dark:text-slate-100 group-hover:text-primary-600 transition-colors">{job.title}</h4>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">{job.co} • {job.location}</p>
-                                </div>
-                                <div className="text-right">
-                                    <div className="inline-flex items-center px-2 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-bold mb-1">
-                                        {job.match}% MATCH
-                                    </div>
-                                    <p className="text-xs text-slate-400 dark:text-slate-500">{job.type}</p>
-                                </div>
+                        <div className="py-12 flex flex-col items-center justify-center text-center">
+                            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
+                                <Search className="w-8 h-8 text-slate-300 dark:text-slate-600" />
                             </div>
-                        ))
+                            <h4 className="font-semibold text-slate-900 dark:text-slate-100 mb-2">No Recommendations Yet</h4>
+                            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-[280px]">Complete your profile to unlock personalized job matches powered by AI.</p>
+                            <Link to="/profile" className="mt-4">
+                                <Button variant="outline" size="sm">Update Profile</Button>
+                            </Link>
+                        </div>
                     )}
                 </CardContent>
         </Card>

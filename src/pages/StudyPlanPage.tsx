@@ -266,22 +266,22 @@ export const StudyPlanPage = () => {
                                 </CardContent>
                             </Card>
 
-                            <Card className="bg-slate-900 dark:bg-slate-950 text-white border-none shadow-2xl overflow-hidden group">
+                            <Card className="bg-white dark:bg-slate-950 text-slate-900 dark:text-white border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden group">
                                 <CardContent className="p-8 relative">
                                     <div className="relative z-10">
-                                        <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center mb-6">
-                                            <Sparkles className="w-6 h-6 text-primary-400" />
+                                        <div className="w-12 h-12 bg-primary-50 dark:bg-white/10 rounded-2xl flex items-center justify-center mb-6">
+                                            <Sparkles className="w-6 h-6 text-primary-600 dark:text-primary-400" />
                                         </div>
                                         <h3 className="font-black text-xl mb-3 tracking-tight">Need a Mentor?</h3>
-                                        <p className="text-slate-400 text-sm mb-6 leading-relaxed font-medium">Schedule a 15-min deep-dive with an expert in <span className="text-white">{plan.target_role}</span>.</p>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm mb-6 leading-relaxed font-medium">Schedule a 15-min deep-dive with an expert in <span className="text-slate-900 dark:text-white font-bold">{plan.target_role}</span>.</p>
                                         <Button 
-                                            className="w-full bg-white text-slate-900 hover:bg-slate-100 border-none h-14 rounded-2xl font-black group"
+                                            className="w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 border-none h-14 rounded-2xl font-black group"
                                             onClick={() => setIsMentorModalOpen(true)}
                                         >
                                             Book Session <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform" />
                                         </Button>
                                     </div>
-                                    <div className="absolute top-0 right-0 w-40 h-40 bg-primary-600 rounded-full blur-[80px] opacity-20 -mr-20 -mt-20 group-hover:opacity-40 transition-opacity"></div>
+                                    <div className="absolute top-0 right-0 w-40 h-40 bg-primary-600 rounded-full blur-[80px] opacity-10 group-hover:opacity-20 -mr-20 -mt-20 transition-opacity"></div>
                                 </CardContent>
                             </Card>
                         </div>

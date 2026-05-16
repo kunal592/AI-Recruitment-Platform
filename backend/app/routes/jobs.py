@@ -4,9 +4,10 @@ app/routes/jobs.py
 Job discovery, search, bookmark, and AI recommendation endpoints.
 """
 
+from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, status, HTTPException
 
 from app.core.dependencies import get_current_user
 from app.models.user import User
@@ -142,17 +143,21 @@ async def get_dashboard_stats(
     
     profile = await Profile.find_one(Profile.user_id == user_id)
     skills_count = len(profile.skills) if profile and profile.skills else 0
-    ats_avg = min(60 + (skills_count * 2), 95) if profile else 0
     
-    # Mock some data for views if not tracked
-    views = 42 + (total_apps * 5)
+    # If no skills are defined, ATS score should be 0
+    ats_avg = min(60 + (skills_count * 2), 95) if skills_count > 0 else 0
+    
+    # Views should be 0 for a brand new account with no activity
+    # We consider "activity" as having a job title set or having applications
+    has_activity = total_apps > 0 or (profile and profile.preferred_job_titles)
+    views = (42 + (total_apps * 5)) if has_activity else 0
     
     return {
         "total_applications": total_apps,
         "interviews_scheduled": interviews,
         "ats_score_avg": ats_avg,
         "profile_views": views,
-        "application_trend": "+15%", # Mock trend
+        "application_trend": "+0%" if not has_activity else "+15%", 
     }
 
 

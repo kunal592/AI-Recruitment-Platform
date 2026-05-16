@@ -110,10 +110,10 @@ export const ResumeUploadPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                 {/* Upload Section */}
                 <div className="lg:col-span-5">
-                    <Card className="border-none shadow-2xl shadow-slate-200/50 dark:shadow-none overflow-hidden dark:bg-slate-900">
-                        <CardHeader className="bg-slate-900 dark:bg-slate-950 text-white border-b dark:border-slate-800">
+                    <Card className="border-none shadow-2xl shadow-slate-200/50 dark:shadow-none overflow-hidden bg-white dark:bg-slate-900">
+                        <CardHeader className="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800">
                             <CardTitle className="text-lg flex items-center">
-                                <Upload className="w-5 h-5 mr-3 text-primary-400" />
+                                <Upload className="w-5 h-5 mr-3 text-primary-600 dark:text-primary-400" />
                                 {file ? 'Ready to Analyze' : 'Upload Resume'}
                             </CardTitle>
                         </CardHeader>
