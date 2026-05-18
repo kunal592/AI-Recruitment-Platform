@@ -101,7 +101,8 @@ export const JobDetailsPage = () => {
         setActiveAction('apply');
         const result = await dispatch(autoApply({
             job_url: job.apply_url || `https://example.com/jobs/${id}`,
-            submit: false, 
+            submit: false,
+            job_id: job.id || id,
         }));
         if (autoApply.fulfilled.match(result)) {
             toast.success(result.payload.message || 'Auto-apply completed!');

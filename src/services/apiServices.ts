@@ -118,6 +118,7 @@ export const automationService = {
     resume_id?: string;
     cover_letter?: string;
     extra_fields?: Record<string, string>;
+    job_id?: string;
   }, submit: boolean = false) =>
     api.post(`/automation/auto-apply?submit=${submit}`, data),
 };

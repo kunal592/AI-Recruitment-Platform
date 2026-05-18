@@ -87,6 +87,7 @@ export const autoApply = createAsyncThunk(
       cover_letter?: string;
       extra_fields?: Record<string, string>;
       submit?: boolean;
+      job_id?: string;
     },
     { rejectWithValue }
   ) => {

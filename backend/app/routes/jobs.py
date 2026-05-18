@@ -100,11 +100,12 @@ async def list_saved_jobs(
     current_user: User = Depends(get_current_user),
 ) -> dict:
     """Return all jobs the user has saved."""
+    from app.utils.helpers import stringify_object_ids
     saved = await get_saved_jobs(str(current_user.id))
     jobs = [
         {
             "id": str(s.id),
-            "job_data": s.job_data,
+            "job_data": stringify_object_ids(s.job_data),
             "notes": s.notes,
             "applied": s.applied,
             "applied_at": s.applied_at.isoformat() if s.applied_at else None,
@@ -114,6 +115,8 @@ async def list_saved_jobs(
         }
         for s in saved
     ]
+    from loguru import logger
+    logger.info("Serialized saved jobs response: {}", jobs)
     return {"saved_jobs": jobs, "total": len(jobs)}
 
 

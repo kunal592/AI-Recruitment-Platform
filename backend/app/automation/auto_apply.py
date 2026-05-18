@@ -150,6 +150,81 @@ async def run_auto_apply(
                         logger.success("Application submitted for user {}", user_id)
                         break
 
+        # Step 6: Save application state to database
+        try:
+            from app.models.job import Job, SavedJob
+            from bson import ObjectId
+            
+            job = None
+            if payload.job_id:
+                # Try Mongo ID first
+                if len(payload.job_id) == 24:
+                    try:
+                        job = await Job.get(ObjectId(payload.job_id))
+                    except Exception:
+                        pass
+                # Try external_id
+                if not job:
+                    job = await Job.find_one(Job.external_id == payload.job_id)
+            
+            # Try finding by URL if not found by ID
+            if not job:
+                job = await Job.find_one(Job.apply_url == payload.job_url)
+                
+            # If found, check if SavedJob exists, otherwise create it
+            if job:
+                existing = await SavedJob.find_one(
+                    SavedJob.user_id == user_id,
+                    SavedJob.job_id == job.external_id,
+                )
+                if existing:
+                    existing.applied = True
+                    existing.status = "applied"
+                    existing.applied_at = datetime.utcnow()
+                    await existing.save()
+                    logger.info("Updated existing SavedJob application tracking for user_id={}", user_id)
+                else:
+                    saved = SavedJob(
+                        user_id=user_id,
+                        job_id=job.external_id,
+                        job_data=job.model_dump() if hasattr(job, "model_dump") else job.dict(),
+                        applied=True,
+                        applied_at=datetime.utcnow(),
+                        status="applied",
+                        is_manual=False
+                    )
+                    await saved.insert()
+                    logger.info("Created new SavedJob application tracking for user_id={}", user_id)
+            else:
+                # Fallback: create a manual/tracked application entry from URL domain
+                from urllib.parse import urlparse
+                domain = urlparse(payload.job_url).netloc or "External Site"
+                company = domain.replace("www.", "").split(".")[0].capitalize()
+                
+                fallback_job_data = {
+                    "title": "Online Application",
+                    "company": company,
+                    "location": "Remote",
+                    "description": f"Applied via Auto-Apply at {payload.job_url}",
+                    "external_id": f"auto_{uuid.uuid4().hex[:8]}",
+                    "source": "auto_apply",
+                    "apply_url": payload.job_url,
+                }
+                
+                saved = SavedJob(
+                    user_id=user_id,
+                    job_id=fallback_job_data["external_id"],
+                    job_data=fallback_job_data,
+                    applied=True,
+                    applied_at=datetime.utcnow(),
+                    status="applied",
+                    is_manual=False
+                )
+                await saved.insert()
+                logger.info("Created fallback SavedJob application tracking from domain={} for user_id={}", company, user_id)
+        except Exception as db_exc:
+            logger.error("Failed to update SavedJob application state: {}", db_exc)
+
         return AutoApplyResponse(
             success=True,
             message="Form filled successfully." + (" Application submitted." if submit else " Review the screenshot before submitting."),

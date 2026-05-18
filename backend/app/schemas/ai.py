@@ -102,6 +102,7 @@ class AutoApplyRequest(BaseModel):
     resume_id: Optional[str] = None
     cover_letter: Optional[str] = None
     extra_fields: Optional[dict] = None   # Any site-specific form fields
+    job_id: Optional[str] = None
 
 
 class AutoApplyResponse(BaseModel):
